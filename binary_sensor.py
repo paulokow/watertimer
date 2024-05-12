@@ -68,8 +68,8 @@ class WaterTimerRunningStatus(BinarySensorEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.running-state"
 
-    def update(self) -> None:
-        self._dev.update()
+    async def async_update(self) -> None:
+        await self._dev.update()
 
     @property
     def available(self) -> bool:
@@ -104,8 +104,8 @@ class WaterTimerAutoStatus(BinarySensorEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.auto-mode-on"
 
-    def update(self) -> None:
-        self._dev.update()
+    async def async_update(self) -> None:
+        await self._dev.update()
 
     @property
     def available(self) -> bool:

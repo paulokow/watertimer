@@ -59,25 +59,25 @@ class WaterTimerManualSwitch(SwitchEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.manual-switch"
 
-    def update(self) -> None:
-        self._dev.update()
+    async def async_update(self) -> None:
+        await self._dev.update()
 
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._dev.available
 
-    def turn_on(self, **kwargs) -> None:
+    async def async_turn_on(self, **kwargs) -> None:
         """Turn the entity on."""
-        self._dev.turn_manual_on(
+        await self._dev.turn_manual_on(
             self.platform.config_entry.options.get(CONFIG_MANUAL_TIME, 0)
             if self.platform is not None and self.platform.config_entry is not None
             else 0
         )
 
-    def turn_off(self, **kwargs) -> None:
+    async def async_turn_off(self, **kwargs) -> None:
         """Turn the entity off."""
-        self._dev.turn_manual_off()
+        await self._dev.turn_manual_off()
 
     @property
     def is_on(self):

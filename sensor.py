@@ -69,8 +69,8 @@ class WaterTimerBatteryStatus(SensorEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.battery"
 
-    def update(self) -> None:
-        self._dev.update()
+    async def async_update(self) -> None:
+        await self._dev.update()
         self._attr_native_value = self._dev.battery_level
 
     @property
@@ -111,8 +111,8 @@ class WaterTimerManualModeTime(SensorEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.manual-mode-minutes"
 
-    def update(self) -> None:
-        self._dev.update()
+    async def async_update(self) -> None:
+        await self._dev.update()
         self._attr_native_value = (
             self._dev.manual_mode_time
             if self._dev.manual_mode_on

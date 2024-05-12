@@ -33,10 +33,10 @@ class WaterTimerPauseDaysEntity(NumberEntity):
     """A setting to pause automatic watering for a number of days"""
 
     # _attr_device_class = SwitchDeviceClass.SWITCH
-    _attr_min_value = 0
-    _attr_max_value = 7
-    _attr_step = 1
-    _attr_unit_of_measurement = UnitOfTime.DAYS
+    _attr_native_min_value = 0
+    _attr_native_max_value = 7
+    _attr_native_step = 1
+    _attr_native_unit_of_measurement = UnitOfTime.DAYS
 
     def __init__(self, entry: ConfigEntry, device: WaterTimerDevice) -> None:
         self._dev = device
@@ -60,16 +60,16 @@ class WaterTimerPauseDaysEntity(NumberEntity):
     def unique_id(self) -> str:
         return f"{format_mac(self._dev.mac)}.pause-days"
 
-    def update(self) -> None:
+    async def async_update(self) -> None:
         """Updates entity value"""
-        self._dev.update()
-        self._attr_value = self._dev.pause_days
+        await self._dev.update()
+        self._attr_native_value = self._dev.pause_days
 
     @property
     def available(self) -> bool:
         """Return True if entity is available."""
         return self._dev.available
 
-    def set_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
-        self._dev.set_pause_days(int(value))
+        await self._dev.set_pause_days(int(value))

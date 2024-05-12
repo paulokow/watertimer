@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime, timedelta
 import logging
 from random import randint
@@ -92,16 +93,16 @@ class WaterTimerDevice:
             # "via_device": (hue.DOMAIN, self.api.bridgeid),
         }
 
-    def update(self, force: bool = False):
+    async def update(self, force: bool = False):
         """Updates device, not more frequent than once / minute"""
         _LOGGER.debug("Update called")
         now = datetime.now()
         with updatelock:
             if now - self._last_update > timedelta(minutes=1) or force:
-                self._perform_update()
+                await self._perform_update()
                 self._last_update = now
 
-    def _perform_update(self):
+    async def _perform_update(self):
         """Performs actual update of the device data"""
         _LOGGER.debug("..Performing update")
         try:
@@ -116,7 +117,7 @@ class WaterTimerDevice:
                         self._mac,
                         i,
                     )
-                    sleep(1)
+                    await asyncio.sleep(1)
             if connected:
                 self._is_available = True
                 self._is_running = self._device_handle.running_mode in [
@@ -220,7 +221,7 @@ class WaterTimerDevice:
         _LOGGER.debug("Reading manual mode on")
         return self._manual_mode_on
 
-    def turn_manual_on(self, time: int = 0) -> bool:
+    async def turn_manual_on(self, time: int = 0) -> bool:
         """Turn on device in manual mode
 
         :param time: Run duration, zero means last default value, defaults to 0
@@ -232,12 +233,12 @@ class WaterTimerDevice:
         with updatelock:
             try:
                 ret = self._device_handle.switch_manual_on(time)
-                self.update(force=True)
+                await self.update(force=True)
             finally:
                 self._device_handle.disconnect()
         return ret
 
-    def turn_manual_off(self) -> bool:
+    async def turn_manual_off(self) -> bool:
         """Turn off device in manual mode
 
         :return: if function succeeded
@@ -247,7 +248,7 @@ class WaterTimerDevice:
         with updatelock:
             try:
                 ret = self._device_handle.switch_manual_off()
-                self.update(force=True)
+                await self.update(force=True)
             finally:
                 self._device_handle.disconnect()
         return ret
@@ -272,7 +273,7 @@ class WaterTimerDevice:
         _LOGGER.debug("Reading pause days")
         return self._pause_days
 
-    def set_pause_days(self, value: int) -> bool:
+    async def set_pause_days(self, value: int) -> bool:
         """Setting for pause days
 
         :param value: Pause duration in days
@@ -285,7 +286,7 @@ class WaterTimerDevice:
         with updatelock:
             try:
                 ret = self._device_handle.set_pause_days(value)
-                self.update(force=True)
+                await self.update(force=True)
             finally:
                 self._device_handle.disconnect()
         return ret
