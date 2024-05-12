@@ -1,0 +1,19 @@
+{
+  "domain": "watertimer",
+  "name": "Spray-Mist-F638",
+  "version": "0.1.0",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/watertimer",
+  "requirements": ["spraymistf638==0.1.7"],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": ["@paulokow"],
+  "iot_class": "local_polling",
+  "bluetooth": [
+    {
+      "service_uuid": "0000fcc0-0000-1000-8000-00805f9b34fb"
+    }
+  ]
+}
