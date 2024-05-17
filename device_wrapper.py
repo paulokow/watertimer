@@ -2,8 +2,6 @@ import asyncio
 from datetime import datetime, timedelta
 import logging
 from random import randint
-from threading import RLock
-from time import sleep
 from typing import Union
 
 from spraymistf638.driver import RunningMode, SprayMistF638, WorkingMode
@@ -12,9 +10,9 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-updatelock = RLock()
+updatelock = asyncio.Lock()
 
-if _LOGGER.isEnabledFor(logging.DEBUG):
+if _LOGGER.isEnabledFor(logging.DEBUG) and False:
     from unittest.mock import Mock, PropertyMock
 
     manual_mode = False
@@ -97,7 +95,7 @@ class WaterTimerDevice:
         """Updates device, not more frequent than once / minute"""
         _LOGGER.debug("Update called")
         now = datetime.now()
-        with updatelock:
+        async with updatelock:
             if now - self._last_update > timedelta(minutes=1) or force:
                 await self._perform_update()
                 self._last_update = now
@@ -108,7 +106,7 @@ class WaterTimerDevice:
         try:
             connected = False
             for i in range(1, 6):
-                connected = self._device_handle.connect()
+                connected = await self._device_handle.connect()
                 if connected:
                     break
                 else:
@@ -120,22 +118,22 @@ class WaterTimerDevice:
                     await asyncio.sleep(1)
             if connected:
                 self._is_available = True
-                self._is_running = self._device_handle.running_mode in [
+                self._is_running = await self._device_handle.running_mode in [
                     RunningMode.RunningAutomatic,
                     RunningMode.RunningManual,
                 ]
                 self._auto_mode_on = (
-                    self._device_handle.working_mode == WorkingMode.Auto
+                    await self._device_handle.working_mode == WorkingMode.Auto
                 )
-                self._battery_level = int(self._device_handle.battery_level)
-                self._manual_mode_time = self._device_handle.manual_time
-                self._manual_mode_on = self._device_handle.manual_on
-                self._pause_days = self._device_handle.pause_days
+                self._battery_level = int(await self._device_handle.battery_level)
+                self._manual_mode_time = await self._device_handle.manual_time
+                self._manual_mode_on = await self._device_handle.manual_on
+                self._pause_days = await self._device_handle.pause_days
             else:
                 _LOGGER.warning("Water timer device: %s cannot be reached", self._mac)
                 self._is_available = False
         finally:
-            self._device_handle.disconnect()
+            await self._device_handle.disconnect()
 
     @property
     def mac(self) -> str:
@@ -147,7 +145,7 @@ class WaterTimerDevice:
         return self._mac
 
     @property
-    def can_connect(self) -> bool:
+    async def can_connect(self) -> bool:
         """Checks connection to the device
 
         :return: if connection was successful
@@ -156,9 +154,9 @@ class WaterTimerDevice:
         _LOGGER.debug("Reading can_connect")
         ret = False
         try:
-            ret = self._device_handle.connect()
+            ret = await self._device_handle.connect()
         finally:
-            self._device_handle.disconnect()
+            await self._device_handle.disconnect()
         return ret
 
     @property
@@ -230,12 +228,9 @@ class WaterTimerDevice:
         :rtype: bool
         """
         ret = False
-        with updatelock:
-            try:
-                ret = self._device_handle.switch_manual_on(time)
-                await self.update(force=True)
-            finally:
-                self._device_handle.disconnect()
+        async with updatelock:
+            ret = await self._device_handle.switch_manual_on(time)
+        await self.update(force=True)
         return ret
 
     async def turn_manual_off(self) -> bool:
@@ -245,12 +240,9 @@ class WaterTimerDevice:
         :rtype: bool
         """
         ret = False
-        with updatelock:
-            try:
-                ret = self._device_handle.switch_manual_off()
-                await self.update(force=True)
-            finally:
-                self._device_handle.disconnect()
+        async with updatelock:
+            ret = await self._device_handle.switch_manual_off()
+        await self.update(force=True)
         return ret
 
     @property
@@ -283,12 +275,9 @@ class WaterTimerDevice:
         """
         _LOGGER.debug(f"Setting pause days: {value}")
         ret = False
-        with updatelock:
-            try:
-                ret = self._device_handle.set_pause_days(value)
-                await self.update(force=True)
-            finally:
-                self._device_handle.disconnect()
+        async with updatelock:
+            ret = self._device_handle.set_pause_days(value)
+        await self.update(force=True)
         return ret
 
 

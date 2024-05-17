@@ -1,10 +1,10 @@
 {
   "domain": "watertimer",
   "name": "Spray-Mist-F638",
-  "version": "0.1.0",
+  "version": "0.2.0-dev1",
   "config_flow": true,
   "documentation": "https://www.home-assistant.io/integrations/watertimer",
-  "requirements": ["spraymistf638==0.1.7"],
+  "requirements": ["git+https://github.com/paulokow/Spray-Mist-F638-driver-bluepy.git@feature/bleak"],
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
