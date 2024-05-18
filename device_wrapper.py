@@ -314,13 +314,13 @@ async def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerD
     if mac in devices:
         return devices[mac]
     else:
-        ble_device = await bluetooth.async_ble_device_from_address(
+        ble_device = bluetooth.async_ble_device_from_address(
             hass, mac, connectable=True
         )
-        if ble_device is None:
+        if not ble_device:
             _LOGGER.error("Cannot get the device with MAC %s", mac)
         else:
             _LOGGER.info("Got the device with MAC %s (%s)", mac, ble_device.address)
-        dev = WaterTimerDevice(ble_device if ble_device is not None else mac, name)
+        dev = WaterTimerDevice(ble_device if ble_device else mac, name)
         devices[mac] = dev
         return dev
