@@ -32,10 +32,18 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
 
-    ble_device = bluetooth.async_ble_device_from_address(
+    ble_device = await bluetooth.async_ble_device_from_address(
         hass, data["mac"], connectable=True
     )
-    device = WaterTimerDevice(ble_device, "")
+    if ble_device is None:
+        _LOGGER.error("[Config flow] Cannot get the device with MAC %s", data["mac"])
+    else:
+        _LOGGER.info(
+            "[Config flow] Got the device with MAC %s (%s)",
+            data["mac"],
+            ble_device.address,
+        )
+    device = WaterTimerDevice(ble_device if ble_device is not None else data["mac"], "")
     if not device.can_connect:
         raise CannotConnect
 
