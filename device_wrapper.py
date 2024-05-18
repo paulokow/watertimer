@@ -4,7 +4,11 @@ import logging
 from random import randint
 from typing import Union
 
+from bleak.backends.device import BLEDevice
 from spraymistf638.driver import RunningMode, SprayMistF638, WorkingMode
+
+from homeassistant.components import bluetooth
+from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN
 
@@ -60,10 +64,13 @@ if _LOGGER.isEnabledFor(logging.DEBUG) and False:
 
 
 class WaterTimerDevice:
-    """AI is creating summary for"""
-
-    def __init__(self, mac: str, name: str) -> None:
-        self._mac = mac
+    def __init__(self, address_or_ble_device: BLEDevice | str, name: str) -> None:
+        if isinstance(address_or_ble_device, BLEDevice):
+            self._mac = address_or_ble_device.address
+            self._device = address_or_ble_device
+        else:
+            self._mac = address_or_ble_device
+            self._device = None
         self._last_update = datetime.min
         self._name = name
         self._is_available = False
@@ -73,11 +80,11 @@ class WaterTimerDevice:
         self._manual_mode_time = 30
         self._manual_mode_on = False
         self._pause_days = 0
-        self._device_handle = SprayMistF638(mac)
+        self._device_handle = SprayMistF638(address_or_ble_device)
 
     @property
     def device_info(self) -> dict:
-        """Generate device info structure
+        """Generate device info structure.
 
         :return: device info
         :rtype: dict[str, str]
@@ -92,7 +99,7 @@ class WaterTimerDevice:
         }
 
     async def update(self, force: bool = False):
-        """Updates device, not more frequent than once / minute"""
+        """Updates device, not more frequent than once / minute."""
         _LOGGER.debug("Update called")
         now = datetime.now()
         async with updatelock:
@@ -284,7 +291,7 @@ class WaterTimerDevice:
 devices: dict[str, WaterTimerDevice] = dict()
 
 
-def create_device(mac: str, name: str) -> WaterTimerDevice:
+def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerDevice:
     """Creates a WaterTimer device object or returns an existing one by mac address
 
     :param mac: mac address
@@ -297,6 +304,9 @@ def create_device(mac: str, name: str) -> WaterTimerDevice:
     if mac in devices:
         return devices[mac]
     else:
-        dev = WaterTimerDevice(mac, name)
+        ble_device = bluetooth.async_ble_device_from_address(
+            hass, mac, connectable=True
+        )
+        dev = WaterTimerDevice(ble_device, name)
         devices[mac] = dev
         return dev

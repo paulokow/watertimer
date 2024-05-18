@@ -7,6 +7,7 @@ from typing import Any
 
 import voluptuous as vol
 
+from homeassistant.components import bluetooth
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -31,9 +32,12 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
 
-    device = WaterTimerDevice(data["mac"], "")
-    # if not device.can_connect:
-    #    raise CannotConnect
+    ble_device = bluetooth.async_ble_device_from_address(
+        hass, data["mac"], connectable=True
+    )
+    device = WaterTimerDevice(ble_device, "")
+    if not device.can_connect:
+        raise CannotConnect
 
     # Return info that you want to store in the config entry.
     return {"title": f"WaterTimer {data['mac']}"}
