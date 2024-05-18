@@ -70,7 +70,7 @@ if _LOGGER.isEnabledFor(logging.DEBUG) and False:
 
 
 class WaterTimerDevice:
-    def __init__(self, address_or_ble_device: BLEDevice | str, name: str) -> None:
+    def __init__(self, address_or_ble_device: Union[BLEDevice, str], name: str) -> None:
         if isinstance(address_or_ble_device, BLEDevice):
             self._mac = address_or_ble_device.address
             self._device = address_or_ble_device
@@ -301,7 +301,7 @@ class WaterTimerDevice:
 devices: dict[str, WaterTimerDevice] = dict()
 
 
-def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerDevice:
+async def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerDevice:
     """Creates a WaterTimer device object or returns an existing one by mac address
 
     :param mac: mac address
@@ -314,9 +314,13 @@ def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerDevice:
     if mac in devices:
         return devices[mac]
     else:
-        ble_device = bluetooth.async_ble_device_from_address(
+        ble_device = await bluetooth.async_ble_device_from_address(
             hass, mac, connectable=True
         )
+        if ble_device is None:
+            _LOGGER.error("Cannot get the device with MAC %s", mac)
+        else:
+            _LOGGER.info("Got the device with MAC %s (%s)", mac, ble_device.address)
         dev = WaterTimerDevice(ble_device if ble_device is not None else mac, name)
         devices[mac] = dev
         return dev
