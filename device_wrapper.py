@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 updatelock = asyncio.Lock()
 
 if _LOGGER.isEnabledFor(logging.DEBUG) and False:
-    from unittest.mock import Mock, PropertyMock
+    from unittest.mock import AsyncMock, PropertyMock
 
     manual_mode = False
     pause_days = randint(0, 7)
@@ -37,8 +37,10 @@ if _LOGGER.isEnabledFor(logging.DEBUG) and False:
         global pause_days
         pause_days = val
 
-    SprayMistF638 = Mock(spec=SprayMistF638)
-    SprayMistF638.return_value.connect = Mock(side_effect=lambda: randint(0, 3) != 0)
+    SprayMistF638 = AsyncMock(spec=SprayMistF638)
+    SprayMistF638.return_value.connect = AsyncMock(
+        side_effect=lambda: randint(0, 3) != 0
+    )
     type(SprayMistF638.return_value).running_mode = PropertyMock(
         side_effect=lambda: randint(0, 3)
     )
@@ -57,9 +59,13 @@ if _LOGGER.isEnabledFor(logging.DEBUG) and False:
     type(SprayMistF638.return_value).pause_days = PropertyMock(
         side_effect=lambda: pause_days
     )
-    SprayMistF638.return_value.switch_manual_on = Mock(side_effect=switch_manual_on)
-    SprayMistF638.return_value.switch_manual_off = Mock(side_effect=switch_manual_off)
-    SprayMistF638.return_value.set_pause_days = Mock(side_effect=set_pause_days)
+    SprayMistF638.return_value.switch_manual_on = AsyncMock(
+        side_effect=switch_manual_on
+    )
+    SprayMistF638.return_value.switch_manual_off = AsyncMock(
+        side_effect=switch_manual_off
+    )
+    SprayMistF638.return_value.set_pause_days = AsyncMock(side_effect=set_pause_days)
     _LOGGER.warning("Device is mocked in debug logging mode")
 
 
@@ -68,9 +74,13 @@ class WaterTimerDevice:
         if isinstance(address_or_ble_device, BLEDevice):
             self._mac = address_or_ble_device.address
             self._device = address_or_ble_device
+            _LOGGER.info(
+                "Constructing WaterTimerDevice with BLEDevice. MAC: %s", self._mac
+            )
         else:
             self._mac = address_or_ble_device
             self._device = None
+            _LOGGER.info("Constructing WaterTimerDevice with MAC: %s", self._mac)
         self._last_update = datetime.min
         self._name = name
         self._is_available = False
@@ -307,6 +317,6 @@ def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerDevice:
         ble_device = bluetooth.async_ble_device_from_address(
             hass, mac, connectable=True
         )
-        dev = WaterTimerDevice(ble_device, name)
+        dev = WaterTimerDevice(ble_device if ble_device is not None else mac, name)
         devices[mac] = dev
         return dev
