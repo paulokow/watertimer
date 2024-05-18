@@ -30,7 +30,7 @@ async def async_setup_entry(
     :return: success
     :rtype: bool
     """
-    device = create_device(entry.data["mac"], entry.title)
+    device = create_device(hass, entry.data["mac"], entry.title)
     add_entities_callback(
         [
             WaterTimerBatteryStatus(entry, device),
