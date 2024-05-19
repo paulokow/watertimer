@@ -33,14 +33,16 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     """
 
     ble_device = bluetooth.async_ble_device_from_address(
-        hass, data["mac"], connectable=True
+        hass, data["mac"].upper(), connectable=True
     )
     if not ble_device:
-        _LOGGER.error("[Config flow] Cannot get the device with MAC %s", data["mac"])
+        _LOGGER.error(
+            "[Config flow] Cannot get the device with MAC %s", data["mac"].upper()
+        )
     else:
         _LOGGER.info(
             "[Config flow] Got the device with MAC %s (%s)",
-            data["mac"],
+            data["mac"].upper(),
             ble_device.address,
         )
     device = WaterTimerDevice(ble_device if ble_device else data["mac"], "")
@@ -48,7 +50,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         raise CannotConnect
 
     # Return info that you want to store in the config entry.
-    return {"title": f"WaterTimer {data['mac']}"}
+    return {"title": f"WaterTimer {data['mac'].upper()}"}
 
 
 class WaterTimerConfigFlow(ConfigFlow, domain=DOMAIN):

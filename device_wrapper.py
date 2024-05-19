@@ -311,16 +311,16 @@ async def create_device(hass: HomeAssistant, mac: str, name: str) -> WaterTimerD
     :return: created or existing device object
     :rtype: WaterTimerDevice
     """
-    if mac in devices:
-        return devices[mac]
+    if mac.upper() in devices:
+        return devices[mac.upper()]
     else:
         ble_device = bluetooth.async_ble_device_from_address(
-            hass, mac, connectable=True
+            hass, mac.upper(), connectable=True
         )
         if not ble_device:
             _LOGGER.error("Cannot get the device with MAC %s", mac)
         else:
             _LOGGER.info("Got the device with MAC %s (%s)", mac, ble_device.address)
-        dev = WaterTimerDevice(ble_device if ble_device else mac, name)
-        devices[mac] = dev
+        dev = WaterTimerDevice(ble_device if ble_device else mac.upper(), name)
+        devices[mac.upper()] = dev
         return dev
