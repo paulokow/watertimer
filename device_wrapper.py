@@ -293,7 +293,7 @@ class WaterTimerDevice:
         _LOGGER.debug(f"Setting pause days: {value}")
         ret = False
         async with updatelock:
-            ret = self._device_handle.set_pause_days(value)
+            ret = await self._device_handle.set_pause_days(value)
         await self.update(force=True)
         return ret
 
